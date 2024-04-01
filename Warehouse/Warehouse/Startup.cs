@@ -5,178 +5,190 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Warehouse.DatabaseConnector;
+using Warehouse.Model;
+using Warehouse.Repositories.ItemsRepo;
+using Warehouse.Repositories.OrdersRepo;
 using Warehouse.Services.AuthenticationService;
+using Warehouse.Services.Items;
 using Warehouse.Services.TokenService;
+using Warehouse.Services.UserService;
+using Serilog;
+using Serilog.Events;
 
-namespace Warehouse
+namespace Warehouse;
+public class Startup
 {
-    public class StartUp
+    public IConfiguration Configuration { get; }
+
+    public Startup(IConfiguration configuration)
     {
-        public IConfiguration Configuration { get; }
+        Configuration = configuration;
+    }
 
-        public StartUp(IConfiguration configuration)
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllers();
+        services.AddCors();
+        services.AddEndpointsApiExplorer();
+        services.AddHttpContextAccessor();
+
+        AddSwagger(services);
+
+        AddAuthentication(services);
+        AddIdentity(services);
+        var connectionString = Configuration["ConnectionString"];
+        services.AddDbContext<UserContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<DatabaseContext>(options => options.UseNpgsql(connectionString));
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IItemRepository, ItemRepository>();
+        services.AddScoped<IRequestRepository, RequestRepository>();
+        services.AddScoped<IItemService, ItemService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAuthService, AuthService>();
+
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
         {
-            Configuration = configuration;
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
 
-        public void ConfigureServices(IServiceCollection services)
+        app.UseHttpsRedirection();
+
+        app.UseCors(o => o
+            .SetIsOriginAllowed(origin => true)
+            //.AllowCredentials()
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+
+
+        app.UseAuthentication();
+        app.UseRouting();
+        app.UseAuthorization();
+
+
+        app.UseEndpoints(endpoints =>
         {
-            ConfigureControllers(services);
-            ConfigureSwaggerGen(services);
-            ConfigureLogging(services);
-            ConfigureCors(services);
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<ITokenService, TokenService>();
-            services.AddIdentity<IdentityUser, IdentityRole>()
-            .AddEntityFrameworkStores<UserContext>()
-            .AddDefaultTokenProviders();
+            endpoints.MapControllers();
+        });
 
-            var connectionString = Configuration["ConnectionString"];
-            AddAuthentication(services);
-            AddDbContext(services, connectionString);
-            AddIdentity(services);
-        }
+        AddRoles(app);
+    }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    private void AddAuthentication(IServiceCollection services)
+    {
+        var config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
+
+        var validIssuer = config["Authentication:ValidIssuer"];
+        var validAudience = config["Authentication:ValidAudience"];
+        var claimNameSub = config["Authentication:ClaimNameSub"];
+        var issuerSigningKey = Configuration["Authentication:IssuerSigningKey"];
+
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ClockSkew = TimeSpan.Zero,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = false,
+                    ValidateIssuerSigningKey = false,
+                    ValidIssuer = validIssuer,
+                    ValidAudience = validAudience,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(issuerSigningKey)
+                    )
+                };
+            });
+    }
+
+    private void AddIdentity(IServiceCollection services)
+    {
+        services
+            .AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 3;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+
+            })
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<UserContext>();
+    }
+
+    private void AddSwagger(IServiceCollection services)
+    {
+        services.AddSwaggerGen(option =>
         {
-            if (env.IsDevelopment())
+            option.SwaggerDoc("v1", new OpenApiInfo
             {
-                app.UseCors();
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-            app.UseCors();
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
+                Title = "Warehouse",
+                Version = "v1"
             });
 
-            AddRoles(app);
-        }
-
-        private void AddIdentity(IServiceCollection services)
-        {
-            services
-                .AddIdentityCore<IdentityUser>(options =>
-                {
-                    options.SignIn.RequireConfirmedAccount = false;
-                    options.User.RequireUniqueEmail = true;
-                    options.Password.RequireDigit = false;
-                    options.Password.RequiredLength = 3;
-                    options.Password.RequireNonAlphanumeric = false;
-                    options.Password.RequireUppercase = false;
-                    options.Password.RequireLowercase = false;
-
-                })
-                .AddRoles<IdentityRole>()
-                .AddEntityFrameworkStores<UserContext>();
-        }
-        private void ConfigureControllers(IServiceCollection services)
-        {
-            services.AddControllers();
-            services.AddEndpointsApiExplorer();
-            services.AddHttpContextAccessor();
-        }
-
-        private void ConfigureSwaggerGen(IServiceCollection services)
-        {
-            services.AddSwaggerGen(option =>
+            option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                option.SwaggerDoc("v1", new OpenApiInfo { Title = "Football League Api", Version = "v1" });
-                option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    In = ParameterLocation.Header,
-                    Description = "Please enter a valid token",
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.Http,
-                    BearerFormat = "JWT",
-                    Scheme = "Bearer"
-                });
-                option.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
+                In = ParameterLocation.Header,
+                Description = "Please enter a valid token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer"
+            });
+
+            option.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
                 {
                     new OpenApiSecurityScheme
                     {
                         Reference = new OpenApiReference
                         {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
+                            Type=ReferenceType.SecurityScheme,
+                            Id="Bearer"
                         }
-                    },
-                    new string[] { }
+                    }, new string[]{ }
                 }
-            });
-            });
-        }
+        });
+        });
+    }
 
-        private void ConfigureLogging(IServiceCollection services)
+    void AddRoles(IApplicationBuilder app)
+    {
+        using var scope = app.ApplicationServices.CreateScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+        var tCoordinator = CreateRole(roleManager, "Coordinator");
+        tCoordinator.Wait();
+
+        var tEmployee = CreateRole(roleManager, "Employee");
+        tEmployee.Wait();
+
+
+    }
+
+    private async Task CreateRole(RoleManager<IdentityRole> roleManager, string roleName)
+    {
+        var adminRoleExists = await roleManager.RoleExistsAsync(roleName);
+        if (!adminRoleExists)
         {
-            services.AddLogging();
-        }
-
-        private void ConfigureCors(IServiceCollection services)
-        {
-            services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(builder =>
-                    builder.AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader());
-            });
-        }
-
-        private void AddAuthentication(IServiceCollection services)
-        {
-            var validIssuer = Configuration["Authentication:ValidIssuer"];
-            var validAudience = Configuration["Authentication:ValidAudience"];
-            var issuerSigningKey = Configuration["IssuerSigningKey"];
-
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters()
-                    {
-                        ClockSkew = TimeSpan.Zero,
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = validIssuer,
-                        ValidAudience = validAudience,
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(issuerSigningKey)
-                        )
-                    };
-                });
-        }
-
-        private void AddDbContext(IServiceCollection services, string connectionString)
-        {
-            services.AddDbContext<UserContext>(options => options.UseNpgsql(connectionString));
-        }
-
-        private void AddRoles(IApplicationBuilder app)
-        {
-            using var scope = app.ApplicationServices.CreateScope();
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            CreateRole(roleManager, "Coordinator").Wait();
-            CreateRole(roleManager, "Employee").Wait();
-        }
-
-        private async Task CreateRole(RoleManager<IdentityRole> roleManager, string roleName)
-        {
-            var roleExists = await roleManager.RoleExistsAsync(roleName);
-            if (!roleExists)
-            {
-                await roleManager.CreateAsync(new IdentityRole(roleName));
-            }
+            await roleManager.CreateAsync(new IdentityRole(roleName));
         }
     }
 }
+
+
+
+

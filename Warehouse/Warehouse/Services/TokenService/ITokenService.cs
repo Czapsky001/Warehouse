@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace Warehouse.Services.TokenService;
-
-public interface ITokenService
+﻿namespace Warehouse.Services.TokenService
 {
-    string CreateToken(IdentityUser user, string role);
+    public class ITokenService
+    {
+    }
 }
