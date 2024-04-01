@@ -51,11 +51,12 @@ namespace Warehouse.Services.Items
             }
         }
 
-        public async Task<bool> RemoveItemAsync(Item item)
+        public async Task<bool> RemoveItemAsync(int id)
         {
             try
             {
-                return await _itemRepository.DeleteItemAsync(item);
+                var existItem = await _itemRepository.GetItemByIdAsync(id);
+                return await _itemRepository.DeleteItemAsync(existItem);
             }
             catch (Exception ex)
             {

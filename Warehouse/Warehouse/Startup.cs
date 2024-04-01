@@ -11,9 +11,6 @@ using Warehouse.Repositories.OrdersRepo;
 using Warehouse.Services.AuthenticationService;
 using Warehouse.Services.Items;
 using Warehouse.Services.TokenService;
-using Warehouse.Services.UserService;
-using Serilog;
-using Serilog.Events;
 
 namespace Warehouse;
 public class Startup
@@ -44,7 +41,6 @@ public class Startup
         services.AddScoped<IItemRepository, ItemRepository>();
         services.AddScoped<IRequestRepository, RequestRepository>();
         services.AddScoped<IItemService, ItemService>();
-        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
 
     }

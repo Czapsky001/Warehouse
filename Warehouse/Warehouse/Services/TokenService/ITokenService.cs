@@ -1,6 +1,9 @@
-﻿namespace Warehouse.Services.TokenService
+﻿using Warehouse.Model;
+
+namespace Warehouse.Services.TokenService
 {
-    public class ITokenService
+    public interface ITokenService
     {
+        public string CreateToken(ApplicationUser user, IEnumerable<string> roles);
     }
 }

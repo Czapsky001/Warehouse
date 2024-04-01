@@ -32,6 +32,32 @@ public class ItemController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+    [HttpPost("create"), Authorize(Roles = "Coordinator")]
+    public async Task<ActionResult<Item>> CreateItem(Item item)
+    {
+        try
+        {
+            var result = await _itemService.AddItemAsync(item);
+            return Ok(result);
+        }catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return BadRequest(ex.Message);
+        }
+    }
+    [HttpDelete("delete"), Authorize(Roles = "Coordinator")]
+    public async Task<ActionResult<bool>> DeleteItem(int id)
+    {
+        try
+        {
+            var result = await _itemService.RemoveItemAsync(id);
+            return Ok(result);
+        }catch(Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return BadRequest(ex.Message);
+        }
+    }
 
 
 }
