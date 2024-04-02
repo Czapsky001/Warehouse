@@ -19,7 +19,7 @@ public class UnitController : ControllerBase
         _logger = logger;
         _unitService = service;
     }
-    [HttpGet("GetAllUnits"), Authorize(Roles = "Coordinator")]
+    [HttpGet("GetAllUnits"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<IEnumerable<Unit>>> GetAllUnits()
     {
         try
@@ -32,7 +32,7 @@ public class UnitController : ControllerBase
             return BadRequest();
         }
     }
-    [HttpPost("CreateUnit"), Authorize(Roles = "Coordinator")]
+    [HttpPost("CreateUnit"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<Unit>> CreateUnit([FromBody] CreateUnitDto unit)
     {
         try
@@ -45,7 +45,7 @@ public class UnitController : ControllerBase
             return BadRequest();
         }
     }
-    [HttpDelete("DeleteUnit"), Authorize(Roles = "Coordinator")]
+    [HttpDelete("DeleteUnit"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<bool>> DeleteUnit(int id)
     {
         try

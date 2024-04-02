@@ -19,7 +19,7 @@ public class ItemGroupController : ControllerBase
         _itemGroupService = itemGroupService;
         _logger = logger;
     }
-    [HttpGet("GetAllItemGroup"), Authorize(Roles = "Coordinator")]
+    [HttpGet("GetAllItemGroup"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<IEnumerable<ItemGroup>>> GetAllItemGroup()
     {
         try
@@ -32,7 +32,7 @@ public class ItemGroupController : ControllerBase
             return BadRequest();
         }
     }
-    [HttpPost("CreateItemGroup"), Authorize(Roles = "Coordinator")]
+    [HttpPost("CreateItemGroup"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<bool>> CreateItemGroup([FromBody]CreateItemGroupDto itemGroupDto)
     {
         try
@@ -45,7 +45,7 @@ public class ItemGroupController : ControllerBase
             return BadRequest();
         }
     }
-    [HttpDelete("DeleteItemGroup"), Authorize(Roles = "Coordinator")]
+    [HttpDelete("DeleteItemGroup"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<bool>> DeleteItemGroup(int id)
     {
         try

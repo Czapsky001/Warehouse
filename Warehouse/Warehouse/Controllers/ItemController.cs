@@ -19,7 +19,7 @@ public class ItemController : ControllerBase
         _itemService = itemService;
     }
 
-    [HttpGet("items"), Authorize(Roles = "Coordinator")]
+    [HttpGet("items"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<IEnumerable<Item>>> GetAllItems()
     {
         try
@@ -33,7 +33,7 @@ public class ItemController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-    [HttpPost("create"), Authorize(Roles = "Coordinator")]
+    [HttpPost("create"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<Item>> CreateItem(CreateItemDto item)
     {
         try
@@ -46,7 +46,7 @@ public class ItemController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-    [HttpDelete("delete"), Authorize(Roles = "Coordinator")]
+    [HttpDelete("delete"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<bool>> DeleteItem(int id)
     {
         try
@@ -60,7 +60,7 @@ public class ItemController : ControllerBase
         }
     }
 
-    [HttpPut("update"), Authorize(Roles = "Coordinator")]
+    [HttpPut("update"), Authorize(Roles = "Coordinator, Employee")]
     public async Task<ActionResult<bool>> UpdateItem(UpdateItemDto item)
     {
         try
