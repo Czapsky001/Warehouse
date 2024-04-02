@@ -1,13 +1,11 @@
-﻿namespace Warehouse.Lists.Items;
+﻿using System.Text.Json.Serialization;
 
-public enum ItemGroup
+namespace Warehouse.Lists.Items;
+
+public class ItemGroup
 {
-    Electronics,
-    Clothing,
-    Groceries,
-    Tools,
-    HouseholdChemicals,
-    BuildingMaterials,
-    OfficeAndSchoolSupplies,
-    Cosmetics
+    public int ItemGroupId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+    public ICollection<Item> Items { get; set; } = new List<Item>();
 }

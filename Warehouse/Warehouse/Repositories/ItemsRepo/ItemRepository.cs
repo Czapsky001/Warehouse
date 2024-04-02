@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Warehouse.DatabaseConnector;
 using Warehouse.Lists.Items;
 
@@ -13,7 +14,6 @@ namespace Warehouse.Repositories.ItemsRepo
         {
             _logger = logger;
             _context = context;
-
         }
         public async Task<bool> AddItemAsync(Item item)
         {
@@ -49,7 +49,11 @@ namespace Warehouse.Repositories.ItemsRepo
         {
             try
             {
-                return await _context.Items.ToListAsync();
+                var result = await _context.Items
+                    .Include(i => i.Unit)
+                    .Include(i => i.ItemGroup)
+                    .ToListAsync();
+                return result;
             }
             catch (Exception ex)
             {
@@ -62,7 +66,7 @@ namespace Warehouse.Repositories.ItemsRepo
         {
             try
             {
-                var findedItem = await _context.Items.FirstOrDefaultAsync(i => i.Id == id);
+                var findedItem = await _context.Items.FirstOrDefaultAsync(i => i.ItemId == id);
                 return findedItem;
 
             }

@@ -4,13 +4,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
+using Warehouse.AutoMapperProfiles;
 using Warehouse.DatabaseConnector;
 using Warehouse.Model;
+using Warehouse.Repositories.ItemGroupRepo;
 using Warehouse.Repositories.ItemsRepo;
 using Warehouse.Repositories.OrdersRepo;
+using Warehouse.Repositories.UnitRepo;
 using Warehouse.Services.AuthenticationService;
+using Warehouse.Services.ItemGroupService;
 using Warehouse.Services.Items;
 using Warehouse.Services.TokenService;
+using Warehouse.Services.Units;
+using Microsoft.AspNetCore.Mvc;
+using Warehouse.Services.RequestService;
+
 
 namespace Warehouse;
 public class Startup
@@ -24,10 +33,13 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options => options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+        services.AddControllers().AddNewtonsoftJson(x =>
+            x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
         services.AddCors();
         services.AddEndpointsApiExplorer();
         services.AddHttpContextAccessor();
+        services.AddAutoMapper(typeof(AutoMapperProfile));
 
         AddSwagger(services);
 
@@ -42,6 +54,12 @@ public class Startup
         services.AddScoped<IRequestRepository, RequestRepository>();
         services.AddScoped<IItemService, ItemService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUnitRepository, UnitRepository>();
+        services.AddScoped<IUnitService, UnitService>();
+        services.AddScoped<IItemGroupRepository, ItemGroupRepository>();
+        services.AddScoped<IItemGroupService,  ItemGroupService>();
+        services.AddScoped<IRequestRepository,  RequestRepository>();
+        services.AddScoped<IRequestService,  RequestService>();
 
     }
 

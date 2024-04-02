@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Warehouse.Lists.Items;
+using Warehouse.Model.Dto.Items;
 using Warehouse.Services.Items;
 
 namespace Warehouse.Controllers;
@@ -33,7 +34,7 @@ public class ItemController : ControllerBase
         }
     }
     [HttpPost("create"), Authorize(Roles = "Coordinator")]
-    public async Task<ActionResult<Item>> CreateItem(Item item)
+    public async Task<ActionResult<Item>> CreateItem(CreateItemDto item)
     {
         try
         {
@@ -52,6 +53,19 @@ public class ItemController : ControllerBase
         {
             var result = await _itemService.RemoveItemAsync(id);
             return Ok(result);
+        }catch(Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPut("update"), Authorize(Roles = "Coordinator")]
+    public async Task<ActionResult<bool>> UpdateItem(UpdateItemDto item)
+    {
+        try
+        {
+            return await _itemService.UpdateItemAsync(item);
         }catch(Exception ex)
         {
             _logger.LogError(ex.Message, ex);

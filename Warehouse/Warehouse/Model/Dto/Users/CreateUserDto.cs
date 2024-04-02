@@ -1,4 +1,4 @@
-﻿namespace Warehouse.Model.Dto;
+﻿namespace Warehouse.Model.Dto.Users;
 
 public class CreateUserDto
 {

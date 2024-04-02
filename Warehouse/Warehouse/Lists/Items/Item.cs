@@ -1,16 +1,19 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography.X509Certificates;
+using Warehouse.Lists.Units;
 
 namespace Warehouse.Lists.Items
 {
     public class Item
     {
-        [Key]
-        public int Id { get; set; }
+        public int ItemId { get; set; }
         [Required]
-        public ItemGroup ItemGroup { get; set; } = ItemGroup.BuildingMaterials;
+        public string Name { get; set; }
         [Required]
-        public Unit Unit { get; set; } = Unit.Liter;
+        public int ItemGroupId { get; set; }
+        public ItemGroup ItemGroup { get; set; }
+        [Required]
+        public int UnitId { get; set; }
+        public Unit Unit { get; set; }
         [Required]
         public int Quantity { get; set; } = 0;
         [Required]
@@ -22,9 +25,13 @@ namespace Warehouse.Lists.Items
         [DataType(DataType.MultilineText)]
         public string? ContactPerson { get; set; }
 
-        public Item(int id, ItemGroup itemGroup, Unit unit, int quantity, double priceWithoutVat, string status)
+        public Item()
         {
-            ItemGroup = itemGroup;
+        }
+
+        public Item(int itemGroupId, Unit unit, int quantity, double priceWithoutVat, string status)
+        {
+            ItemGroupId = itemGroupId;
             Unit = unit;
             Quantity = quantity;
             PriceWithoutVat = priceWithoutVat;
