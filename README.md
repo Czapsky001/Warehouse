@@ -5,7 +5,7 @@ The "Warehouse" project is a warehouse management system that enables tracking o
 - Unit Management: Adding, removing, and editing information about units stored in the warehouse.  
 - Item Management: Adding new products, updating information, and tracking inventory levels.  
 - Order Processing: Creating new orders, managing their status, and monitoring delivery status.  
-- Order Status Management: Defining various order statuses such as "Received," "In Progress," "Completed," etc.  
+- Order Status Management: Defining various order statuses such as "New" "Approved" "Reject".
 
 ## Technologies:  
 - ASP.NET: Utilized for building the web application.  
